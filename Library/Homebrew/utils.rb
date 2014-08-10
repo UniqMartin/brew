@@ -83,15 +83,11 @@ class Tty
 end
 
 def ohai(title, *sput)
-  title = Tty.truncate(title) if $stdout.tty? && !ARGV.verbose?
   puts "#{Tty.blue}==>#{Tty.white} #{title}#{Tty.reset}"
   puts sput
 end
 
-def oh1(title, options = {})
-  if $stdout.tty? && !ARGV.verbose? && options.fetch(:truncate, :auto) == :auto
-    title = Tty.truncate(title)
-  end
+def oh1(title, _options = {})
   puts "#{Tty.green}==>#{Tty.white} #{title}#{Tty.reset}"
 end
 
