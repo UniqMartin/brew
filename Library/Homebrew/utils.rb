@@ -26,11 +26,11 @@ class Tty
     end
 
     def red
-      underline 31
+      bold 31
     end
 
     def yellow
-      underline 33
+      bold 33
     end
 
     def reset
@@ -38,7 +38,7 @@ class Tty
     end
 
     def em
-      underline 39
+      italic 39
     end
 
     def green
@@ -51,6 +51,14 @@ class Tty
 
     def highlight
       bold 39
+    end
+
+    def error
+      bold 31
+    end
+
+    def warning
+      bold 33
     end
 
     def width
@@ -70,6 +78,10 @@ class Tty
 
     def bold(n)
       escape "1;#{n}"
+    end
+
+    def italic(n)
+      escape "3;#{n}"
     end
 
     def underline(n)
@@ -93,11 +105,11 @@ end
 
 # Print a warning (do this rarely)
 def opoo(warning)
-  $stderr.puts "#{Tty.yellow}Warning#{Tty.reset}: #{warning}"
+  $stderr.puts "#{Tty.warning}Warning:#{Tty.reset} #{warning}"
 end
 
 def onoe(error)
-  $stderr.puts "#{Tty.red}Error#{Tty.reset}: #{error}"
+  $stderr.puts "#{Tty.error}Error:#{Tty.reset} #{error}"
 end
 
 def ofail(error)
