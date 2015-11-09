@@ -8,7 +8,7 @@ setup-ruby-path() {
   vendor_ruby_current_version="$vendor_dir/portable-ruby/current"
   vendor_ruby_path="$vendor_ruby_current_version/bin/ruby"
 
-  if [[ -z "$HOMEBREW_DEVELOPER" ]]
+  if [[ -z "$HOMEBREW_DEVELOPER" && -z "$HOMEBREW_FORCE_RUBY_PATH" ]]
   then
     unset HOMEBREW_RUBY_PATH
   fi
