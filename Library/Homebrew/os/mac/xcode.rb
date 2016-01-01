@@ -144,7 +144,7 @@ module OS
 
       def default_prefix?
         if version < "4.3"
-          prefix.to_s.start_with? "/Developer"
+          "#{prefix}/".start_with?("/Developer/")
         else
           prefix.to_s == "/Applications/Xcode.app/Contents/Developer"
         end
