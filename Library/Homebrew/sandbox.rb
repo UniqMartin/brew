@@ -29,6 +29,13 @@ class Sandbox
 
   def initialize
     @profile = SandboxProfile.new
+
+    # Support 'poison-ruby'.
+    if ENV["POISON_RUBY_LOG"]
+      poison_ruby_log = ENV["POISON_RUBY_LOG"]
+      allow_write poison_ruby_log
+      allow_write "#{poison_ruby_log}.lock"
+    end
   end
 
   def record_log(file)

@@ -113,6 +113,15 @@ module Superenv
   def determine_path
     paths = [Superenv.bin]
 
+    # Support 'poison-ruby'.
+    if ENV["POISON_RUBY_LOG"]
+      poison_ruby = begin
+        Formulary.factory("poison-ruby")
+      rescue FormulaUnavailableError
+      end
+      paths << poison_ruby.opt_bin.to_s if poison_ruby
+    end
+
     # Formula dependencies can override standard tools.
     paths += deps.map { |d| d.opt_bin.to_s }
 
