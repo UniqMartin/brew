@@ -1,6 +1,6 @@
 module CctoolsMachO
   # @private
-  OTOOL_RX = /\t(.*) \(compatibility version (?:\d+\.)*\d+, current version (?:\d+\.)*\d+\)/
+  OTOOL_RX = /^\t(.*) \(compatibility version (?:\d+\.)*\d+, current version (?:\d+\.)*\d+\)/
 
   # Mach-O binary methods, see:
   # /usr/include/mach-o/loader.h
@@ -62,18 +62,27 @@ module CctoolsMachO
     end
 
     def parse_otool_L_output
-      args = ["-L", path.expand_path.to_s]
-      libs = Utils.popen_read(OS::Mac.otool, *args).split("\n")
+      args = ["-arch", "all", "-L", "-m", path.expand_path.to_s]
+      otool_output = Utils.popen_read(OS::Mac.otool, *args)
       unless $?.success?
         raise ErrorDuringExecution.new(OS::Mac.otool, args)
       end
 
-      libs.shift # first line is the filename
+      id = nil
+      libs = []
 
-      id = libs.shift[OTOOL_RX, 1] if path.dylib?
-      libs.map! { |lib| lib[OTOOL_RX, 1] }.compact!
+      # Split by architecture (every new architecture starts on a non-tab line).
+      archs = otool_output.split(/\n(?=[^\t])/)
+      archs.each do |arch_libs|
+        arch_libs = arch_libs.split("\n") # first line is the filename
+        arch_libs.shift
+        arch_id = arch_libs.shift[OTOOL_RX, 1] if path.dylib?
 
-      return id, libs
+        id = arch_id if arch_id && id.nil?
+        libs |= arch_libs.map { |lib| lib[OTOOL_RX, 1] }.compact.uniq
+      end
+
+      [id, libs]
     end
   end
 
