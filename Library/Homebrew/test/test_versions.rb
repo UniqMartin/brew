@@ -151,6 +151,18 @@ class VersionParsingTests < Homebrew::TestCase
     d.unlink
   end
 
+  def test_pathname_version_wrong_match
+    # Overeager match in the Erlang OTP rule against the full spec.
+    d_parent = HOMEBREW_CELLAR/"12345-r2axyz"
+    d_parent.mkpath
+    d = d_parent/"foo-0.1.9"
+    d.mkpath
+    assert_equal version("0.1.9"), d.version
+  ensure
+    d.unlink
+    d_parent.unlink
+  end
+
   def test_no_version
     assert_version_nil "http://example.com/blah.tar"
     assert_version_nil "foo"
