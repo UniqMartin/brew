@@ -99,6 +99,19 @@ rename_taps_dir_if_necessary() {
   done
 }
 
+repo_label() {
+  local repo_label
+
+  if [[ "$1" = "$HOMEBREW_REPOSITORY" ]]
+  then
+    repo_label="Homebrew"
+  else
+    repo_label="${1#"$HOMEBREW_LIBRARY/Taps/"}"
+    repo_label="Tap '${repo_label/\/homebrew-//}'"
+  fi
+  echo "$repo_label"
+}
+
 repo_var() {
   local repo_var
 
@@ -203,11 +216,13 @@ merge_or_rebase() {
   fi
 
   local DIR
+  local TAP_LABEL
   local TAP_VAR
   local UPSTREAM_BRANCH
 
   DIR="$1"
   cd "$DIR" || return
+  TAP_LABEL="$(repo_label "$DIR")"
   TAP_VAR="$2"
   UPSTREAM_BRANCH="$3"
   unset STASHED
