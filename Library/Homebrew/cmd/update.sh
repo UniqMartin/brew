@@ -257,6 +257,12 @@ merge_or_rebase() {
     fi
   fi
 
+  # Notify user about git branch switching.
+  if [[ "$INITIAL_BRANCH" != "$UPSTREAM_BRANCH" ]]
+  then
+    echo "$TAP_LABEL: HEAD moved from '$INITIAL_BRANCH' to '$UPSTREAM_BRANCH'."
+  fi
+
   INITIAL_REVISION="$(read_current_revision)"
   export HOMEBREW_UPDATE_BEFORE"$TAP_VAR"="$INITIAL_REVISION"
 
@@ -288,6 +294,9 @@ merge_or_rebase() {
     if [[ "$INITIAL_BRANCH" != "$UPSTREAM_BRANCH" && -n "$INITIAL_BRANCH" ]]
     then
       git checkout "$INITIAL_BRANCH" "${QUIET_ARGS[@]}"
+
+      # Notify user about git branch switching.
+      echo "$TAP_LABEL: HEAD moved from '$UPSTREAM_BRANCH' to '$INITIAL_BRANCH'."
     fi
 
     pop_stash
