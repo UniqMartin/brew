@@ -287,6 +287,13 @@ merge_or_rebase() {
     HOMEBREW_UPDATED="1"
   fi
 
+  # Always report update of a repository with revision range, irrespective of
+  # what might or might not be happening in `brew update-report`.
+  if [[ "$INITIAL_REVISION" != "$CURRENT_REVISION" ]]
+  then
+    echo "$TAP_LABEL: ${INITIAL_REVISION:0:8}..${CURRENT_REVISION:0:8}"
+  fi
+
   trap '' SIGINT
 
   if [[ -n "$HOMEBREW_DEVELOPER" ]]
