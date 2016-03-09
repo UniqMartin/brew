@@ -212,7 +212,10 @@ class Reporter
           formula = Formulary.factory(tap.path/src)
           new_version = formula.pkg_version
           old_version = FormulaVersions.new(formula).formula_at_revision(@initial_revision, &:pkg_version)
-          next if new_version == old_version
+          if new_version == old_version
+            @report[:T] << tap.formula_file_to_name(src)
+            next
+          end
         rescue Exception => e
           onoe "#{e.message}\n#{e.backtrace.join "\n"}" if ARGV.homebrew_developer?
         end
@@ -381,6 +384,7 @@ class ReporterHub
     dump_formula_report :A, "New Formulae"
     dump_formula_report :M, "Updated Formulae"
     dump_formula_report :R, "Renamed Formulae"
+    dump_formula_report :T, "Tweaked Formulae"
     dump_formula_report :D, "Deleted Formulae"
   end
 
