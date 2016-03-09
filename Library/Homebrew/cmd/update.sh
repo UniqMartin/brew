@@ -384,6 +384,7 @@ EOS
   for DIR in "$HOMEBREW_REPOSITORY" "$HOMEBREW_LIBRARY"/Taps/*/*
   do
     [[ -d "$DIR/.git" ]] || continue
+    [[ -e "$DIR/.skip-brew-update" ]] && continue
     cd "$DIR" || continue
 
     if [[ -n "$HOMEBREW_VERBOSE" ]]
@@ -490,6 +491,10 @@ EOS
     if [[ -n "$HOMEBREW_SIMULATE_FROM_CURRENT_BRANCH" ]]
     then
       simulate_from_current_branch "$DIR" "$TAP_VAR" "$UPSTREAM_BRANCH" "$CURRENT_REVISION"
+    elif [[ -e "$DIR/.skip-brew-update" ]]
+    then
+      export HOMEBREW_UPDATE_BEFORE"$TAP_VAR"="$CURRENT_REVISION"
+      export HOMEBREW_UPDATE_AFTER"$TAP_VAR"="$CURRENT_REVISION"
     elif [[ -z "$HOMEBREW_UPDATE_FORCE" ]] &&
          [[ "$PREFETCH_REVISION" = "$POSTFETCH_REVISION" ]] &&
          [[ "$CURRENT_REVISION" = "$POSTFETCH_REVISION" ]]
