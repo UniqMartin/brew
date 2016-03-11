@@ -197,10 +197,7 @@ simulate_from_current_branch() {
 }
 
 merge_or_rebase() {
-  if [[ -n "$HOMEBREW_VERBOSE" ]]
-  then
-    echo "Updating $DIR..."
-  fi
+  [[ -z "$HOMEBREW_VERBOSE" ]] || ohai "Updating $1..."
 
   local DIR
   local TAP_VAR
@@ -381,15 +378,14 @@ EOS
   local update_failed_file="$HOMEBREW_REPOSITORY/.git/UPDATE_FAILED"
   rm -f "$update_failed_file"
 
+  [[ -z "$HOMEBREW_VERBOSE" ]] || oh1 "Fetching Homebrew and taps"
+
   for DIR in "$HOMEBREW_REPOSITORY" "$HOMEBREW_LIBRARY"/Taps/*/*
   do
     [[ -d "$DIR/.git" ]] || continue
     cd "$DIR" || continue
 
-    if [[ -n "$HOMEBREW_VERBOSE" ]]
-    then
-      echo "Checking if we need to fetch $DIR..."
-    fi
+    [[ -z "$HOMEBREW_VERBOSE" ]] || ohai "Checking if we need to fetch $DIR..."
 
     TAP_VAR="$(repo_var "$DIR")"
     UPSTREAM_BRANCH_DIR="$(upstream_branch)"
@@ -444,10 +440,7 @@ EOS
         exit
       fi
 
-      if [[ -n "$HOMEBREW_VERBOSE" ]]
-      then
-        echo "Fetching $DIR..."
-      fi
+      [[ -z "$HOMEBREW_VERBOSE" ]] || ohai "Fetching $DIR..."
 
       if [[ -n "$HOMEBREW_UPDATE_PREINSTALL" ]]
       then
@@ -472,6 +465,8 @@ EOS
     rm -f "$update_failed_file"
     export HOMEBREW_UPDATE_FAILED="1"
   fi
+
+  [[ -z "$HOMEBREW_VERBOSE" ]] || oh1 "Updating Homebrew and taps"
 
   for DIR in "$HOMEBREW_REPOSITORY" "$HOMEBREW_LIBRARY"/Taps/*/*
   do
@@ -509,6 +504,7 @@ EOS
         -n "$HOMEBREW_UPDATE_FORCE" ||
         (-n "$HOMEBREW_DEVELOPER" && -z "$HOMEBREW_UPDATE_PREINSTALL") ]]
   then
+    [[ -z "$HOMEBREW_VERBOSE" ]] || oh1 "Printing update report"
     brew update-report "$@"
     return $?
   elif [[ -z "$HOMEBREW_UPDATE_PREINSTALL" ]]
