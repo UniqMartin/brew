@@ -43,55 +43,123 @@ module Homebrew
       end
     end
 
-    def self.cleanup_cache(cache=HOMEBREW_CACHE)
+    def self.cleanup_cache(cache = HOMEBREW_CACHE)
       return unless cache.directory?
+
       cache.children.each do |path|
         if path.to_s.end_with? ".incomplete"
           cleanup_path(path) { path.unlink }
           next
         end
+
         if %w[java_cache npm_cache].include?(path.basename.to_s) && path.directory?
           cleanup_path(path) { FileUtils.rm_rf path }
           next
         end
+
+        is_resource = path.basename.to_s.include?("--")
+
         if prune?(path)
           if path.file?
             cleanup_path(path) { path.unlink }
-          elsif path.directory? && path.to_s.include?("--")
+          elsif path.directory? && is_resource
             cleanup_path(path) { FileUtils.rm_rf path }
           end
           next
         end
 
-        next unless path.file?
-        file = path
+        next unless path.file? || (path.directory? && is_resource)
 
-        if Pathname::BOTTLE_EXTNAME_RX === file.to_s
-          version = Utils::Bottles.resolve_version(file) rescue file.version
+        version = nil
+        if is_resource
+          name, resource = path.basename.to_s.split("--", 2)
+          if resource && resource.start_with?("patch-")
+            kind = :patch
+          else
+            kind = :resource
+          end
         else
-          version = file.version
+          if Pathname::BOTTLE_EXTNAME_RX === path.to_s
+            kind = :bottle
+            version = Utils::Bottles.resolve_version(path) rescue path.version
+          else
+            kind = :source
+            version = path.version
+          end
+          next unless version # TODO: Report missing version.
+          name = path.basename.to_s[/^(.*)-(?:#{Regexp.escape(version)})/, 1]
         end
-        next unless version
-        next unless (name = file.basename.to_s[/(.*)-(?:#{Regexp.escape(version)})/, 1])
+
+        if ARGV.flag?("--list") # Because `--debug` is a bit too noisy.
+          kind_s = kind.to_s.ljust(8)
+          version_s = " (#{version})" if version
+          puts "[#{kind_s}] #{name}#{version_s} => #{path.basename}"
+        end
+
+        # FIXME: Validate name, e.g., use `Formula.valid_name?`!
+        next unless name # TODO: Report missing name.
 
         next unless HOMEBREW_CELLAR.directory?
-
         begin
           f = Formulary.from_rack(HOMEBREW_CELLAR/name)
         rescue FormulaUnavailableError, TapFormulaAmbiguityError, TapFormulaWithOldnameAmbiguityError
+          opoo "No formula for '#{name}' (#{path})." if ARGV.homebrew_developer?
           next
         end
 
-        file_is_stale = if PkgVersion === version
-          f.pkg_version > version
-        else
-          f.version > version
-        end
+        is_stale = path_is_stale(f, path, kind, version)
+        is_unneeded = ARGV.flag?("--scrub") && !f.installed?
 
-        if file_is_stale || ARGV.switch?("s") && !f.installed? || Utils::Bottles::file_outdated?(f, file)
-          cleanup_path(file) { file.unlink }
+        if is_stale || is_unneeded || Utils::Bottles.file_outdated?(f, path)
+          if path.file?
+            cleanup_path(path) { path.unlink }
+          elsif path.directory? && is_resource
+            cleanup_path(path) { FileUtils.rm_rf(path) }
+          end
         end
       end
+    end
+
+    def self.path_is_stale(formula, path, kind, version)
+      case kind
+      when :patch
+        patch_is_stale(formula, path)
+      when :resource
+        resource_is_stale(formula, path)
+      when :bottle, :source
+        if PkgVersion === version
+          formula.pkg_version > version
+        else
+          formula.version > version
+        end
+      end
+    end
+
+    def self.patch_is_stale(formula, path)
+      [:stable, :devel, :head].each do |spec_symbol|
+        spec = formula.send(spec_symbol)
+        next if spec.nil?
+
+        spec.patches.each do |patch|
+          next unless patch.is_a?(ExternalPatch)
+          return false if path == patch.cached_download
+        end
+      end
+
+      true
+    end
+
+    def self.resource_is_stale(formula, path)
+      [:stable, :devel, :head].each do |spec_symbol|
+        spec = formula.send(spec_symbol)
+        next if spec.nil?
+
+        resources = spec.resources.values.map(&:cached_download)
+        resources << spec.cached_download
+        return false if resources.include?(path)
+      end
+
+      true
     end
 
     def self.cleanup_path(path)
