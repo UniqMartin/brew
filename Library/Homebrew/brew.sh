@@ -170,22 +170,12 @@ fi
 HOMEBREW_ARG_COUNT="$#"
 HOMEBREW_COMMAND="$1"
 shift
-case "$HOMEBREW_COMMAND" in
-  ls)          HOMEBREW_COMMAND="list";;
-  homepage)    HOMEBREW_COMMAND="home";;
-  -S)          HOMEBREW_COMMAND="search";;
-  up)          HOMEBREW_COMMAND="update";;
-  ln)          HOMEBREW_COMMAND="link";;
-  instal)      HOMEBREW_COMMAND="install";; # gem does the same
-  rm)          HOMEBREW_COMMAND="uninstall";;
-  remove)      HOMEBREW_COMMAND="uninstall";;
-  configure)   HOMEBREW_COMMAND="diy";;
-  abv)         HOMEBREW_COMMAND="info";;
-  dr)          HOMEBREW_COMMAND="doctor";;
-  --repo)      HOMEBREW_COMMAND="--repository";;
-  environment) HOMEBREW_COMMAND="--env";;
-  --config)    HOMEBREW_COMMAND="config";;
-esac
+
+if [[ -f "$HOMEBREW_LIBRARY/Homebrew/cmd/$HOMEBREW_COMMAND.alias" ]]
+then
+  HOMEBREW_COMMAND="$(<"$HOMEBREW_LIBRARY/Homebrew/cmd/$HOMEBREW_COMMAND.alias")"
+  HOMEBREW_COMMAND="${HOMEBREW_COMMAND%%$'\n'*}"
+fi
 
 if [[ -f "$HOMEBREW_LIBRARY/Homebrew/cmd/$HOMEBREW_COMMAND.sh" ]]
 then
