@@ -19,6 +19,7 @@ HOMEBREW_VERSION = ENV["HOMEBREW_VERSION"]
 HOMEBREW_WWW = "http://brew.sh"
 
 require "config"
+require "command"
 
 HOMEBREW_REPOSITORY.extend(GitRepositoryExtension)
 
@@ -59,21 +60,3 @@ HOMEBREW_PULL_OR_COMMIT_URL_REGEX = %r[https://github\.com/([\w-]+)/([\w-]+)?/(?
 require "compat" unless ARGV.include?("--no-compat") || ENV["HOMEBREW_NO_COMPAT"]
 
 ORIGINAL_PATHS = ENV["PATH"].split(File::PATH_SEPARATOR).map { |p| Pathname.new(p).expand_path rescue nil }.compact.freeze
-
-# TODO: remove this as soon as it's removed from commands.rb.
-HOMEBREW_INTERNAL_COMMAND_ALIASES = {
-  "ls" => "list",
-  "homepage" => "home",
-  "-S" => "search",
-  "up" => "update",
-  "ln" => "link",
-  "instal" => "install", # gem does the same
-  "rm" => "uninstall",
-  "remove" => "uninstall",
-  "configure" => "diy",
-  "abv" => "info",
-  "dr" => "doctor",
-  "--repo" => "--repository",
-  "environment" => "--env",
-  "--config" => "config"
-}
