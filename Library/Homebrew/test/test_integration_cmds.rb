@@ -327,7 +327,7 @@ class IntegrationCommandTests < Homebrew::TestCase
   end
 
   def test_commands
-    assert_match "Built-in commands",
+    assert_match "--version",
                  cmd("commands")
   end
 
@@ -595,7 +595,7 @@ class IntegrationCommandTests < Homebrew::TestCase
 
   def test_custom_command
     mktmpdir do |path|
-      cmd = "int-test-#{rand}"
+      cmd = "int-test-#{rand(4096)}"
       file = "#{path}/brew-#{cmd}"
 
       File.open(file, "w") { |f| f.write "#!/bin/sh\necho 'I am #{cmd}'\n" }
