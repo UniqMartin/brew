@@ -18,21 +18,27 @@ if OS.mac? && MacOS.version < "10.6"
   EOABORT
 end
 
-def require?(path)
-  require path
-rescue LoadError => e
-  # HACK: ( because we should raise on syntax errors but
-  # not if the file doesn't exist. TODO make robust!
-  raise unless e.to_s.include? path
-end
-
 begin
   trap("INT", std_trap) # restore default CTRL-C handler
 
+  # Add contributed commands to PATH before checking.
+  Dir["#{HOMEBREW_LIBRARY}/Taps/*/*/cmd"].each do |tap_cmd_dir|
+    ENV["PATH"] += "#{File::PATH_SEPARATOR}#{tap_cmd_dir}"
+  end
+
+  # Add SCM wrappers.
+  ENV["PATH"] += "#{File::PATH_SEPARATOR}#{HOMEBREW_SHIMS_PATH}/scm"
+
+  # Usage instructions should be displayed if and only if one of:
+  # - a help flag is passed AND an internal command is matched
+  # - a help flag is passed AND there is no command specified
+  # - no arguments are passed
+  #
+  # It should never affect external commands so they can handle usage
+  # arguments themselves.
   empty_argv = ARGV.empty?
   help_flag_list = %w[-h --help --usage -?]
   help_flag = false
-  internal_cmd = true
   cmd = nil
 
   ARGV.dup.each_with_index do |arg, i|
@@ -45,33 +51,10 @@ begin
       # Command-style help: `help <cmd>` is fine, but `<cmd> help` is not.
       help_flag = true
     elsif !cmd
-      cmd = ARGV.delete_at(i)
+      cmd = Command[ARGV.delete_at(i)]
     end
   end
 
-  # Add contributed commands to PATH before checking.
-  Dir["#{HOMEBREW_LIBRARY}/Taps/*/*/cmd"].each do |tap_cmd_dir|
-    ENV["PATH"] += "#{File::PATH_SEPARATOR}#{tap_cmd_dir}"
-  end
-
-  # Add SCM wrappers.
-  ENV["PATH"] += "#{File::PATH_SEPARATOR}#{HOMEBREW_SHIMS_PATH}/scm"
-
-  if cmd
-    internal_cmd = require? HOMEBREW_LIBRARY_PATH.join("cmd", cmd)
-
-    if !internal_cmd && ARGV.homebrew_developer?
-      internal_cmd = require? HOMEBREW_LIBRARY_PATH.join("dev-cmd", cmd)
-    end
-  end
-
-  # Usage instructions should be displayed if and only if one of:
-  # - a help flag is passed AND an internal command is matched
-  # - a help flag is passed AND there is no command specified
-  # - no arguments are passed
-  #
-  # It should never affect external commands so they can handle usage
-  # arguments themselves.
   if empty_argv || help_flag
     require "cmd/help"
     Homebrew.help cmd, :empty_argv => empty_argv
@@ -79,19 +62,22 @@ begin
   end
 
   # Uninstall old brew-cask if it's still around; we just use the tap now.
-  if cmd == "cask" && (HOMEBREW_CELLAR/"brew-cask").exist?
+  if cmd.name == "cask" && (HOMEBREW_CELLAR/"brew-cask").exist?
     system(HOMEBREW_BREW_FILE, "uninstall", "--force", "brew-cask")
   end
 
-  if internal_cmd
-    Homebrew.send cmd.to_s.tr("-", "_").downcase
-  elsif which "brew-#{cmd}"
-    %w[CACHE LIBRARY_PATH].each do |e|
-      ENV["HOMEBREW_#{e}"] = Object.const_get("HOMEBREW_#{e}").to_s
+  # Dispatch to command implementation.
+  if cmd.internal? && cmd.ruby?
+    require cmd.path
+    Homebrew.send cmd.name.tr("-", "_").downcase
+  elsif cmd.external?
+    if cmd.ruby?
+      require cmd.path
+      exit Homebrew.failed? ? 1 : 0
+    else
+      ENV["HOMEBREW_CACHE"] = HOMEBREW_CACHE
+      exec cmd.path, *ARGV
     end
-    exec "brew-#{cmd}", *ARGV
-  elsif (path = which("brew-#{cmd}.rb")) && require?(path)
-    exit Homebrew.failed? ? 1 : 0
   else
     require "tap"
     possible_tap = OFFICIAL_CMD_TAPS.find { |_, cmds| cmds.include?(cmd) }
@@ -134,7 +120,7 @@ rescue RuntimeError, SystemCallError => e
 rescue Exception => e
   Utils::Analytics.report_exception(e)
   onoe e
-  if internal_cmd && defined?(OS::ISSUES_URL)
+  if cmd && cmd.internal? && defined?(OS::ISSUES_URL)
     $stderr.puts "#{Tty.white}Please report this bug:"
     $stderr.puts "    #{Tty.em}#{OS::ISSUES_URL}#{Tty.reset}"
   end
