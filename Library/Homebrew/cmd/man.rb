@@ -41,28 +41,17 @@ module Homebrew
 
   def build_man_page
     template = (SOURCE_PATH/"brew.1.md.erb").read
+    commands_in_man = Command.internal_commands.select do |command|
+      command.documented? && !command.hide_from_man_page?
+    end
+
     variables = OpenStruct.new
-
-    variables[:commands] = Pathname.glob("#{HOMEBREW_LIBRARY_PATH}/cmd/*.{rb,sh}").
-      sort_by { |source_file| sort_key_for_path(source_file) }.
-      map { |source_file|
-        source_file.read.lines.
-          grep(/^#:/).
-          map { |line| line.slice(2..-1) }.
-          join
-      }.
-      reject { |s| s.strip.empty? || s.include?("@hide_from_man_page") }
-
+    variables[:commands] = commands_in_man.sort.map(&:help)
     variables[:maintainers] = (HOMEBREW_REPOSITORY/"README.md").
       read[/Homebrew's current maintainers are (.*)\./, 1].
       scan(/\[([^\]]*)\]/).flatten
 
-    ERB.new(template, nil, ">").result(variables.instance_eval{ binding })
-  end
-
-  def sort_key_for_path(path)
-    # Options after regular commands (`~` comes after `z` in ASCII table).
-    path.basename.to_s.sub(/\.(rb|sh)$/, "").sub(/^--/, "~~")
+    ERB.new(template, nil, ">").result(variables.instance_eval { binding })
   end
 
   def convert_man_page(markup, target)
