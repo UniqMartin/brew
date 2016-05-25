@@ -96,11 +96,14 @@ If \fB\-s\fR is passed, scrubs the cache, removing downloads for even the latest
 Display the path to the file which is used when invoking \fBbrew\fR \fIcmd\fR\.
 .
 .TP
-\fBcommands\fR [\fB\-\-quiet\fR [\fB\-\-include\-aliases\fR]]
+\fBcommands\fR [\fB\-\-quiet\fR] [\fB\-\-include\-aliases\fR]
 Show a list of built\-in and external commands\.
 .
 .IP
-If \fB\-\-quiet\fR is passed, list only the names of commands without the header\. With \fB\-\-include\-aliases\fR, the aliases of internal commands will be included\.
+If \fB\-\-quiet\fR is passed or output doesn\'t go to a terminal, print a simple list instead of grouping output by category and including group headers\.
+.
+.IP
+With \fB\-\-include\-aliases\fR, aliases of internal commands will be included\.
 .
 .TP
 \fBconfig\fR

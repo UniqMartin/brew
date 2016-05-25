@@ -1,62 +1,39 @@
-#:  * `commands` [`--quiet` [`--include-aliases`]]:
+#:  * `commands` [`--quiet`] [`--include-aliases`]:
 #:    Show a list of built-in and external commands.
 #:
-#:    If `--quiet` is passed, list only the names of commands without the header.
-#:    With `--include-aliases`, the aliases of internal commands will be included.
+#:    If `--quiet` is passed or output doesn't go to a terminal, print a simple
+#:    list instead of grouping output by category and including group headers.
+#:
+#:    With `--include-aliases`, aliases of internal commands will be included.
 
 module Homebrew
   def commands
-    if ARGV.include? "--quiet"
-      cmds = internal_commands + external_commands
-      cmds += internal_development_commands if ARGV.homebrew_developer?
-      cmds += HOMEBREW_INTERNAL_COMMAND_ALIASES.keys if ARGV.include? "--include-aliases"
-      puts_columns cmds.sort
+    include_aliases = ARGV.include?("--include-aliases")
+
+    if ARGV.include?("--quiet") || !$stdout.tty?
+      cmds = Command.commands
+      cmds += Command.aliases.values if include_aliases
+      puts_columns cmds.sort.map(&:name)
     else
-      # Find commands in Homebrew/cmd
-      puts "Built-in commands"
-      puts_columns internal_commands
-
-      # Find commands in Homebrew/dev-cmd
+      # Collect commands grouped by category.
+      cmds = []
+      cmds << ["Built-in commands", Command.internal_commands]
+      cmds << ["Built-in aliases", Command.aliases.values] if include_aliases
       if ARGV.homebrew_developer?
-        puts
-        puts "Built-in development commands"
-        puts_columns internal_development_commands
+        cmds << [
+          "Built-in developer commands",
+          Command.internal_developer_commands,
+        ]
       end
+      cmds << ["External commands", Command.external_commands]
 
-      # Find commands in the path
-      unless (exts = external_commands).empty?
-        puts
-        puts "External commands"
-        puts_columns exts
+      # Output commands grouped by category (omitting empty lists).
+      cmds.reject! { |_title, list| list.empty? }
+      cmds.each_with_index do |(title, list), index|
+        puts if index != 0
+        ohai title
+        puts_columns list.sort.map(&:pretty_print)
       end
-    end
-  end
-
-  def internal_commands
-    find_internal_commands HOMEBREW_LIBRARY_PATH/"cmd"
-  end
-
-  def internal_development_commands
-    find_internal_commands HOMEBREW_LIBRARY_PATH/"dev-cmd"
-  end
-
-  def external_commands
-    paths.reduce([]) do |cmds, path|
-      Dir["#{path}/brew-*"].each do |file|
-        next unless File.executable?(file)
-        cmd = File.basename(file, ".rb")[5..-1]
-        cmds << cmd unless cmd.include?(".")
-      end
-      cmds
-    end.sort
-  end
-
-  private
-
-  def find_internal_commands(directory)
-    directory.children.reduce([]) do |cmds, f|
-      cmds << f.basename.to_s.sub(/\.(?:rb|sh)$/, "") if f.file?
-      cmds
     end
   end
 end

@@ -73,10 +73,12 @@ actually remove anything.</p>
 versions of formulae. Note downloads for any installed formulae will still not be
 deleted. If you want to delete those too: <code>rm -rf $(brew --cache)</code></p></dd>
 <dt><code>command</code> <var>cmd</var></dt><dd><p>Display the path to the file which is used when invoking <code>brew</code> <var>cmd</var>.</p></dd>
-<dt><code>commands</code> [<code>--quiet</code> [<code>--include-aliases</code>]]</dt><dd><p>Show a list of built-in and external commands.</p>
+<dt><code>commands</code> [<code>--quiet</code>] [<code>--include-aliases</code>]</dt><dd><p>Show a list of built-in and external commands.</p>
 
-<p>If <code>--quiet</code> is passed, list only the names of commands without the header.
-With <code>--include-aliases</code>, the aliases of internal commands will be included.</p></dd>
+<p>If <code>--quiet</code> is passed or output doesn't go to a terminal, print a simple
+list instead of grouping output by category and including group headers.</p>
+
+<p>With <code>--include-aliases</code>, aliases of internal commands will be included.</p></dd>
 <dt class="flush"><code>config</code></dt><dd><p>Show Homebrew and system configuration useful for debugging. If you file
 a bug report, you will likely be asked for this information if you do not
 provide it.</p></dd>
