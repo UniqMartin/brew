@@ -33,15 +33,9 @@ EOS
 
 module Homebrew
   def help(cmd = nil, flags = {})
-    # Resolve command aliases and find file containing the implementation.
-    if cmd
-      cmd = HOMEBREW_INTERNAL_COMMAND_ALIASES.fetch(cmd, cmd)
-      path = command_path(cmd)
-    end
-
     # Display command-specific (or generic) help in response to `UsageError`.
     if (error_message = flags[:usage_error])
-      $stderr.puts path ? command_help(path) : HOMEBREW_HELP
+      $stderr.puts cmd.internal? ? command_help(cmd) : HOMEBREW_HELP
       $stderr.puts
       onoe error_message
       exit 1
@@ -60,40 +54,21 @@ module Homebrew
     end
 
     # Resume execution in `brew.rb` for external/unknown commands.
-    return if path.nil?
+    return unless cmd.internal?
 
     # Display help for internal command (or generic help if undocumented).
-    puts command_help(path)
+    puts command_help(cmd)
     exit 0
   end
 
   private
 
-  def command_path(cmd)
-    if File.exist?(HOMEBREW_LIBRARY_PATH/"cmd/#{cmd}.sh")
-      HOMEBREW_LIBRARY_PATH/"cmd/#{cmd}.sh"
-    elsif ARGV.homebrew_developer? && File.exist?(HOMEBREW_LIBRARY_PATH/"dev-cmd/#{cmd}.sh")
-      HOMEBREW_LIBRARY_PATH/"dev-cmd/#{cmd}.sh"
-    elsif File.exist?(HOMEBREW_LIBRARY_PATH/"cmd/#{cmd}.rb")
-      HOMEBREW_LIBRARY_PATH/"cmd/#{cmd}.rb"
-    elsif ARGV.homebrew_developer? && File.exist?(HOMEBREW_LIBRARY_PATH/"dev-cmd/#{cmd}.rb")
-      HOMEBREW_LIBRARY_PATH/"dev-cmd/#{cmd}.rb"
-    end
-  end
-
-  def command_help(path)
-    help_lines = path.read.lines.grep(/^#:/)
-    if help_lines.empty?
-      opoo "No help text in: #{path}" if ARGV.homebrew_developer?
-      HOMEBREW_HELP
+  def command_help(cmd)
+    if cmd.documented?
+      cmd.help(:tty)
     else
-      help_lines.map do |line|
-        line.slice(2..-1).
-          sub(/^  \* /, "#{Tty.highlight}brew#{Tty.reset} ").
-          gsub(/`(.*?)`/, "#{Tty.highlight}\\1#{Tty.reset}").
-          gsub(/<(.*?)>/, "#{Tty.em}\\1#{Tty.reset}").
-          gsub("@hide_from_man_page", "")
-      end.join.strip
+      opoo "No help text in: #{cmd.path}" if ARGV.homebrew_developer?
+      HOMEBREW_HELP
     end
   end
 end
