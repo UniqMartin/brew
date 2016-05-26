@@ -20,6 +20,16 @@ class CommandsTests < Homebrew::TestCase
     @cmds.each(&:unlink)
   end
 
+  def test_commands
+    ARGV.stubs(:homebrew_developer?).returns(false)
+    cmds = Command.commands.map(&:name)
+    refute cmds.include?("rbdevcmd"), "Dev commands shouldn't be included"
+
+    ARGV.stubs(:homebrew_developer?).returns(true)
+    cmds = Command.commands.map(&:name)
+    assert cmds.include?("rbdevcmd"), "Dev commands should be included"
+  end
+
   def test_internal_commands
     cmds = Command.internal_commands.map(&:name)
     assert cmds.include?("rbcmd"), "Ruby commands files should be recognized"
@@ -57,5 +67,16 @@ class CommandsTests < Homebrew::TestCase
     end
   ensure
     ENV.replace(env)
+  end
+
+  def test_command
+    # TODO
+  end
+
+  def test_alias_command
+    cmd = Command.aliases["-S"]
+    assert_equal "search", cmd.canonical_name
+    assert_equal "-S => search", cmd.pretty_print
+    assert_equal HOMEBREW_LIBRARY_PATH/"cmd/-S.alias", cmd.path
   end
 end
