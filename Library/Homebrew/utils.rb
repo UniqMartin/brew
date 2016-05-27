@@ -498,14 +498,20 @@ def nostdout
   end
 end
 
+module Utils
+  def self.paths
+    @paths ||= ENV["PATH"].split(File::PATH_SEPARATOR).collect do |p|
+      begin
+        File.expand_path(p).chomp("/")
+      rescue ArgumentError
+        onoe "The following PATH component is invalid: #{p}"
+      end
+    end.uniq.compact
+  end
+end
+
 def paths
-  @paths ||= ENV["PATH"].split(File::PATH_SEPARATOR).collect do |p|
-    begin
-      File.expand_path(p).chomp("/")
-    rescue ArgumentError
-      onoe "The following PATH component is invalid: #{p}"
-    end
-  end.uniq.compact
+  Utils.paths
 end
 
 # return the shell profile file based on users' preference shell
