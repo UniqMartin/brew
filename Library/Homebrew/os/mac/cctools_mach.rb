@@ -34,6 +34,8 @@ module CctoolsMachO
           when [0xcffaedfe, 0x07000001] then :x86_64
           when [0xfeedface, 0x00000012] then :ppc7400
           when [0xfeedfacf, 0x01000012] then :ppc64
+          when [0xcefaedfe, 0x0c000000] then :arm
+          when [0xcffaedfe, 0x0c000001] then :arm64
           else :dunno
           end
 
