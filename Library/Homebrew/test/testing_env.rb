@@ -5,6 +5,17 @@ require "simplecov" if ENV["HOMEBREW_TESTS_COVERAGE"]
 require "global"
 require "formulary"
 
+at_exit do
+  list = $LOADED_FEATURES.
+         select { |p| p.start_with?("#{HOMEBREW_LIBRARY_PATH}/") }.
+         reject { |p| p.include?("/vendor/bundle/") }.
+         sort.
+         map { |p| p.strip_prefix("#{HOMEBREW_LIBRARY_PATH}/") }
+
+  ohai "Required files (#{list.size}):"
+  puts list
+end
+
 # Test environment setup
 (HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-core/Formula").mkpath
 %w[cache formula_cache locks cellar logs].each { |d| HOMEBREW_PREFIX.parent.join(d).mkpath }
