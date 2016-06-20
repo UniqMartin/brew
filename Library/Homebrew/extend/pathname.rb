@@ -366,7 +366,7 @@ class Pathname
     saved_perms = nil
     unless writable_real?
       saved_perms = stat.mode
-      chmod 0644
+      chmod(0644 & ~File.umask)
     end
     yield
   ensure
@@ -440,7 +440,7 @@ class Pathname
       # Some software links metafiles together, so by the time we iterate to one of them
       # we may have already moved it. libxml2's COPYING and Copyright are affected by this.
       next unless filename.exist?
-      filename.chmod 0644
+      filename.chmod(0644 & ~File.umask)
       install(filename)
     end
   end
