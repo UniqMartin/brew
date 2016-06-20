@@ -681,7 +681,7 @@ class FormulaInstaller
   def install_plist
     return unless formula.plist
     formula.plist_path.atomic_write(formula.plist)
-    formula.plist_path.chmod 0644
+    formula.plist_path.chmod(0644 & ~File.umask)
     log = formula.var/"log"
     log.mkpath if formula.plist.include? log.to_s
   rescue Exception => e
