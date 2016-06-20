@@ -80,6 +80,9 @@ class Cleaner
   # lib may have a large directory tree (see Erlang for instance), and
   # clean_dir applies cleaning rules to the entire tree
   def clean_dir(d)
+    perms_executable = 0555 & ~File.umask
+    perms_other = 0444 & ~File.umask
+
     d.find do |path|
       path.extend(ObserverPathnameExtension)
 
@@ -92,9 +95,9 @@ class Cleaner
       else
         # Set permissions for executables and non-executables
         perms = if executable_path?(path)
-          0555
+          perms_executable
         else
-          0444
+          perms_other
         end
         if ARGV.debug?
           old_perms = path.stat.mode & 0777
