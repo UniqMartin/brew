@@ -45,9 +45,16 @@ __brewcomp ()
 __brew_complete_formulae ()
 {
     local cur="${COMP_WORDS[COMP_CWORD]}"
-    local formulas="$(brew search)"
-    local shortnames="$(echo "$formulas" | grep / | cut -d / -f 3)"
-    COMPREPLY=($(compgen -W "$formulas $shortnames" -- "$cur"))
+    local formulas
+    local shortnames
+    local __brew_complete_formulae_cache
+
+    if [[ -z "${__brew_complete_formulae_cache}" ]] ; then
+        formulas="$(brew search)"
+        shortnames="$(grep / <<< "$formulas" | cut -d / -f 3)"
+        __brew_complete_formulae_cache="$formulas $shortnames"
+    fi
+    COMPREPLY=($(compgen -W "$__brew_complete_formulae_cache" -- "$cur"))
 }
 
 __brew_complete_installed ()
