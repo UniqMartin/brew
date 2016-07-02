@@ -22,10 +22,13 @@ class CleanerTests < Homebrew::TestCase
 
     Cleaner.new(@f).clean
 
-    assert_equal 0100555, (@f.bin/"a.out").stat.mode
-    assert_equal 0100444, (@f.lib/"fat.dylib").stat.mode
-    assert_equal 0100444, (@f.lib/"x86_64.dylib").stat.mode
-    assert_equal 0100444, (@f.lib/"i386.dylib").stat.mode
+    mode_executable = 0100555 & ~File.umask
+    mode_other = 0100444 & ~File.umask
+
+    assert_equal mode_executable, (@f.bin/"a.out").stat.mode
+    assert_equal mode_other, (@f.lib/"fat.dylib").stat.mode
+    assert_equal mode_other, (@f.lib/"x86_64.dylib").stat.mode
+    assert_equal mode_other, (@f.lib/"i386.dylib").stat.mode
   end
 
   def test_prunes_prefix_if_empty
