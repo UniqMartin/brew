@@ -7,7 +7,14 @@ require "formulary"
 
 # Test environment setup
 (HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-core/Formula").mkpath
-%w[cache formula_cache locks cellar logs temp].each { |d| HOMEBREW_PREFIX.parent.join(d).mkpath }
+[
+  HOMEBREW_CACHE,
+  HOMEBREW_CACHE_FORMULA,
+  HOMEBREW_LOCK_DIR,
+  HOMEBREW_CELLAR,
+  HOMEBREW_LOGS,
+  HOMEBREW_TEMP,
+].each(&:mkpath)
 
 # Test fixtures and files can be found relative to this path
 TEST_DIRECTORY = File.dirname(File.expand_path(__FILE__))
