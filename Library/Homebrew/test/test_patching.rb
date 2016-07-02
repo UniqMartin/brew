@@ -4,8 +4,11 @@ require "formula"
 class PatchingTests < Homebrew::TestCase
   TESTBALL_URL = "file://#{TEST_DIRECTORY}/tarballs/testball-0.1.tbz".freeze
   TESTBALL_PATCHES_URL = "file://#{TEST_DIRECTORY}/tarballs/testball-0.1-patches.tgz".freeze
+  TESTBALL_PATCHES_SHA256 = "799c2d551ac5c3a5759bea7796631a7906a6a24435b52261a317133a0bfb34d9".freeze
   PATCH_URL_A = "file://#{TEST_DIRECTORY}/patches/noop-a.diff".freeze
+  PATCH_A_SHA256 = "83404f4936d3257e65f176c4ffb5a5b8d6edd644a21c8d8dcc73e22a6d28fcfa".freeze
   PATCH_URL_B = "file://#{TEST_DIRECTORY}/patches/noop-b.diff".freeze
+  PATCH_B_SHA256 = "57958271bb802a59452d0816e0670d16c8b70bdf6530bcf6f78726489ad89b90".freeze
   PATCH_A_CONTENTS = File.read "#{TEST_DIRECTORY}/patches/noop-a.diff"
   PATCH_B_CONTENTS = File.read "#{TEST_DIRECTORY}/patches/noop-b.diff"
   APPLY_A = "noop-a.diff".freeze
