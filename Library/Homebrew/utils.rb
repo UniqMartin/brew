@@ -141,19 +141,21 @@ def pretty_uninstalled(f)
   end
 end
 
-def pretty_duration(s)
-  s = s.to_i
-  res = ""
+def pretty_duration(seconds)
+  seconds = seconds.to_i
+  components = []
 
-  if s > 59
-    m = s / 60
-    s %= 60
-    res = "#{m} minute#{plural m}"
-    return res if s == 0
-    res << " "
+  if seconds > 59
+    minutes = seconds / 60
+    seconds %= 60
+    components << "#{minutes} minute#{plural(minutes)}"
   end
 
-  res + "#{s} second#{plural s}"
+  if seconds != 0 || components.empty?
+    components << "#{seconds} second#{plural(seconds)}"
+  end
+
+  components.join(" and ")
 end
 
 def plural(n, s = "s")
