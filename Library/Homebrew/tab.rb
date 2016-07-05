@@ -255,6 +255,7 @@ class Tab < OpenStruct
       s << "Poured from bottle"
     else
       s << "Built from source"
+      s << "in #{pretty_duration(build_time)}" if build_time
     end
     if time
       s << Time.at(time).strftime("on %Y-%m-%d at %H:%M:%S")
