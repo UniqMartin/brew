@@ -11,6 +11,7 @@ require "extend/ENV"
 require "debrew"
 require "fcntl"
 require "socket"
+require "benchmark"
 
 class Build
   attr_reader :formula, :deps, :reqs
@@ -128,10 +129,11 @@ class Build
       else
         formula.prefix.mkpath
 
-        formula.install
+        build_time = Benchmark.realtime { formula.install }
 
         stdlibs = detect_stdlibs(ENV.compiler)
         tab = Tab.create(formula, ENV.compiler, stdlibs.first)
+        tab.build_time = build_time.to_i
         tab.write
 
         # Find and link metafiles
