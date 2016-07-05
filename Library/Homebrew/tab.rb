@@ -24,6 +24,7 @@ class Tab < OpenStruct
       "built_as_bottle" => build.bottle?,
       "poured_from_bottle" => false,
       "time" => Time.now.to_i,
+      "build_time" => nil,
       "source_modified_time" => formula.source_modified_time.to_i,
       "HEAD" => HOMEBREW_REPOSITORY.git_head,
       "compiler" => compiler,
@@ -45,6 +46,7 @@ class Tab < OpenStruct
   def self.from_file_content(content, path)
     attributes = Utils::JSON.load(content)
     attributes["tabfile"] = path
+    attributes["build_time"] ||= nil
     attributes["source_modified_time"] ||= 0
     attributes["source"] ||= {}
 
@@ -137,6 +139,7 @@ class Tab < OpenStruct
       "built_as_bottle" => false,
       "poured_from_bottle" => false,
       "time" => nil,
+      "build_time" => nil,
       "source_modified_time" => 0,
       "HEAD" => nil,
       "stdlib" => nil,
@@ -230,6 +233,7 @@ class Tab < OpenStruct
       "built_as_bottle" => built_as_bottle,
       "poured_from_bottle" => poured_from_bottle,
       "time" => time,
+      "build_time" => build_time,
       "source_modified_time" => source_modified_time.to_i,
       "HEAD" => self.HEAD,
       "stdlib" => (stdlib.to_s if stdlib),
