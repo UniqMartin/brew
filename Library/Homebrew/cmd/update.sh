@@ -103,6 +103,29 @@ read_current_revision() {
   git rev-parse -q --verify HEAD
 }
 
+remote_url() {
+  local remote="$1"
+  local url
+
+  # Much nicer than the fallback below, but requires Git 2.7.0 or newer.
+  url="$(git remote get-url "$remote" 2>/dev/null)"
+  if [[ $? -eq 0 ]]
+  then
+    echo "$url"
+    return
+  fi
+
+  # Works with all Git versions, but requires grepping and additional checks.
+  url="$(git remote show -n "$remote" 2>/dev/null | grep -E '^\s+Fetch URL: ')"
+  url="${url#*Fetch URL: }"
+  if [[ -n "$url" && "$url" != "$remote" ]]
+  then
+    echo "$url"
+  fi
+
+  # Print nothing if all attempts failed (remote doesn't exist or has no URL).
+}
+
 pop_stash() {
   [[ -z "$STASHED" ]] && return
   if [[ -n "$HOMEBREW_VERBOSE" ]]
@@ -354,7 +377,7 @@ EOS
         [[ -z "$FORMULAE" ]] && exit
       fi
 
-      UPSTREAM_REPOSITORY_URL="$(git config remote.origin.url)"
+      UPSTREAM_REPOSITORY_URL="$(remote_url origin)"
       if [[ "$UPSTREAM_REPOSITORY_URL" = "https://github.com/"* ]]
       then
         UPSTREAM_REPOSITORY="${UPSTREAM_REPOSITORY_URL#https://github.com/}"
