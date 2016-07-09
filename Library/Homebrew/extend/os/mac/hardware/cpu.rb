@@ -10,12 +10,15 @@ module Hardware
         :g5 => "-mcpu=970",
         :g5_64 => "-mcpu=970 -arch ppc64",
       }.freeze
+
+      remove_method :optimization_flags
       def optimization_flags
         OPTIMIZATION_FLAGS.merge(PPC_OPTIMIZATION_FLAGS)
       end
 
       # These methods use info spewed out by sysctl.
       # Look in <mach/machine.h> for decoding info.
+      remove_method :type
       def type
         case sysctl_int("hw.cputype")
         when 7
@@ -27,6 +30,7 @@ module Hardware
         end
       end
 
+      remove_method :family
       def family
         if intel?
           case sysctl_int("hw.cpufamily")
@@ -75,18 +79,22 @@ module Hardware
         sysctl_int("machdep.cpu.extmodel")
       end
 
+      remove_method :cores
       def cores
         sysctl_int("hw.ncpu")
       end
 
+      remove_method :bits
       def bits
         sysctl_bool("hw.cpu64bit_capable") ? 64 : 32
       end
 
+      remove_method :arch_32_bit
       def arch_32_bit
         intel? ? :i386 : :ppc
       end
 
+      remove_method :arch_64_bit
       def arch_64_bit
         intel? ? :x86_64 : :ppc64
       end
@@ -107,6 +115,7 @@ module Hardware
         end
       end
 
+      remove_method :features
       def features
         @features ||= sysctl_n(
           "machdep.cpu.features",

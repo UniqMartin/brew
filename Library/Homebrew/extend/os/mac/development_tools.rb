@@ -18,10 +18,12 @@ class DevelopmentTools
     # Checks if the user has any developer tools installed, either via Xcode
     # or the CLT. Convenient for guarding against formula builds when building
     # is impossible.
+    remove_method :installed?
     def installed?
       MacOS::Xcode.installed? || MacOS::CLT.installed?
     end
 
+    remove_method :default_compiler
     def default_compiler
       case default_cc
       # if GCC 4.2 is installed, e.g. via Tigerbrew, prefer it

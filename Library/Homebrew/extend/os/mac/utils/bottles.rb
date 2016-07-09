@@ -1,6 +1,7 @@
 module Utils
   class Bottles
     class << self
+      remove_method :tag
       def tag
         if MacOS.version >= :lion
           MacOS.cat
