@@ -39,11 +39,13 @@ Style/ConditionalAssignment:
 # no metrics for formulas
 Metrics/AbcSize:
   Enabled: false
+Metrics/ClassLength:
+  Enabled: false
 Metrics/CyclomaticComplexity:
   Enabled: false
 Metrics/MethodLength:
   Enabled: false
-Metrics/ClassLength:
+Metrics/ModuleLength:
   Enabled: false
 Metrics/PerceivedComplexity:
   Enabled: false
