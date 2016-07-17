@@ -136,7 +136,7 @@ rescue Exception => e
   onoe e
   if internal_cmd && defined?(OS::ISSUES_URL)
     $stderr.puts "#{Tty.white}Please report this bug:"
-    $stderr.puts "    #{Tty.em}#{OS::ISSUES_URL}#{Tty.reset}"
+    $stderr.puts "    #{Tty.url}#{OS::ISSUES_URL}#{Tty.reset}"
   end
   $stderr.puts e.backtrace
   exit 1

@@ -61,6 +61,10 @@ class Tty
       bold 33
     end
 
+    def url
+      underline 39
+    end
+
     def width
       `/usr/bin/tput cols`.strip.to_i
     end
