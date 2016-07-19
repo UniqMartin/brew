@@ -103,6 +103,36 @@ tap-state() {
   echo "[$w$i$s$u]"
 }
 
+tap-all-branches() {
+  local color_green=$'\e[32m'
+  local color_magenta=$'\e[35m'
+  local color_reset=$'\e[0m'
+  local color_yellow=$'\e[1;33m'
+  local branch
+  local branch_skip
+  local branch_track
+  local commit
+  local info
+  local repo_label_max="$1"
+  local output='%(objectname:short)%09%(refname:short)%09%(upstream:trackshort)'
+
+  branch_skip="$(git symbolic-ref HEAD 2> /dev/null)"
+  branch_skip="${branch_skip#refs/heads/}"
+
+  while IFS=$'\t' read -r -a info ; do
+    commit="${info[0]}"
+    branch="${info[1]}"
+    [[ "$branch" != "$branch_skip" ]] || continue
+
+    branch_track="${info[2]}"
+    printf "%s%-*s%s %s%s%s        %s%s%s\n" \
+      "$color_yellow" "$repo_label_max" "|" "$color_reset" \
+      "$color_green" "$commit" "$color_reset" \
+      "$color_magenta" "$branch$branch_track" "$color_reset"
+  done \
+    < <(git for-each-ref --format "$output" refs/heads/)
+}
+
 parse-arguments() {
   local arg
 
@@ -159,7 +189,6 @@ homebrew-tap-status() {
   local repo_state
 
   parse-arguments "$@"
-  : "$HOMEBREW_VERBOSE"
 
   for repo_dir in "$HOMEBREW_REPOSITORY" "$HOMEBREW_LIBRARY"/Taps/*/*
   do
@@ -173,18 +202,22 @@ homebrew-tap-status() {
   do
     [[ -d "$repo_dir/.git" ]] || continue
     cd "$repo_dir" || continue
+    [[ -z "$HOMEBREW_VERBOSE" || "$repo_dir" = "$HOMEBREW_REPOSITORY" ]] \
+      || echo
 
     repo_commit="$(tap-commit)"
     repo_state="$(tap-state)"
     repo_branch="$(tap-branch)"
     repo_label="$(tap-label "$repo_dir")"
     repo_origin_url="$(tap-remote-url origin)"
-    printf "%s%s%s %s%s%s %s%-16s%s %s%-*s%s - %s\n" \
+    printf "%s%-*s%s %s%s%s %s%s%s %s%-16s%s - %s\n" \
+      "$color_yellow" "$repo_label_max" "$repo_label" "$color_reset" \
       "$color_green" "$repo_commit" "$color_reset" \
       "$color_magenta" "$repo_state" "$color_reset" \
       "$color_magenta" "$repo_branch" "$color_reset" \
-      "$color_yellow" "$repo_label_max" "$repo_label" "$color_reset" \
       "$repo_origin_url"
+    [[ -z "$HOMEBREW_VERBOSE" ]] \
+      || tap-all-branches "$repo_label_max"
   done
 
   safe_cd "$HOMEBREW_REPOSITORY"
