@@ -119,6 +119,10 @@ parse-arguments() {
       --debug)
         HOMEBREW_DEBUG=1
         ;;
+      --brewery=*)
+        HOMEBREW_REPOSITORY="${arg#--brewery=}"
+        HOMEBREW_LIBRARY="$HOMEBREW_REPOSITORY/Library"
+        ;;
       --*)
         # Ignore other long options.
         ;;
