@@ -296,7 +296,9 @@ class Tap
   # True if the {#remote} of {Tap} is customized.
   def custom_remote?
     return true unless remote
-    remote.casecmp(default_remote) != 0
+    return false if remote.casecmp(default_remote) == 0
+    return false if remote.casecmp("#{default_remote}.git") == 0
+    true
   end
 
   # path to the directory of all {Formula} files for this {Tap}.
