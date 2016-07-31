@@ -5,13 +5,28 @@ module GitHub
   extend self
   ISSUES_URI = URI.parse("https://api.github.com/search/issues")
 
-  Error = Class.new(RuntimeError)
-  HTTPNotFoundError = Class.new(Error)
+  class Error < RuntimeError; end
+  class HTTPNotFoundError < Error; end
 
-  class RateLimitExceededError < Error
+  class CurlError < Error
+    def initialize(url, errors = nil)
+      message "Curl failed for: #{url}"
+      message += "\n#{errors}" if errors && !errors.empty?
+      super(message)
+    end
+  end
+
+  class APIError < Error
+    def initialize(error, extra_message = nil)
+      message = "GitHub API error: #{error}"
+      message += "\n#{extra_message}" if extra_message
+      super(message)
+    end
+  end
+
+  class RateLimitExceededError < APIError
     def initialize(reset, error)
-      super <<-EOS.undent
-        GitHub API Error: #{error}
+      super error, <<-EOS.undent
         Try again in #{pretty_ratelimit_reset(reset)}, or create a personal access token:
           #{Tty.em}https://github.com/settings/tokens/new?scopes=&description=Homebrew#{Tty.reset}
         and then set the token as: export HOMEBREW_GITHUB_API_TOKEN="your_new_token"
@@ -23,16 +38,15 @@ module GitHub
     end
   end
 
-  class AuthenticationFailedError < Error
+  class AuthenticationFailedError < APIError
     def initialize(error)
-      message = "GitHub #{error}\n"
       if ENV["HOMEBREW_GITHUB_API_TOKEN"]
-        message << <<-EOS.undent
+        super error, <<-EOS.undent
           HOMEBREW_GITHUB_API_TOKEN may be invalid or expired; check:
           #{Tty.em}https://github.com/settings/tokens#{Tty.reset}
         EOS
       else
-        message << <<-EOS.undent
+        super error, <<-EOS.undent
           The GitHub credentials in the OS X keychain may be invalid.
           Clear them with:
             printf "protocol=https\\nhost=github.com\\n" | git credential-osxkeychain erase
@@ -41,7 +55,6 @@ module GitHub
           and then set the token as: export HOMEBREW_GITHUB_API_TOKEN="your_new_token"
         EOS
       end
-      super message
     end
   end
 
@@ -171,7 +184,7 @@ module GitHub
 
     begin
       if !http_code.start_with?("2") && !status.success?
-        raise_api_error(output, errors, http_code, headers)
+        raise_api_error(url, output, errors, http_code, headers)
       end
       json = Utils::JSON.load output
       if block_given?
@@ -184,7 +197,7 @@ module GitHub
     end
   end
 
-  def raise_api_error(output, errors, http_code, headers)
+  def raise_api_error(url, output, errors, http_code, headers)
     meta = {}
     headers.lines.each do |l|
       key, _, value = l.delete(":").partition(" ")
@@ -203,13 +216,16 @@ module GitHub
 
     case http_code
     when "401", "403"
-      raise AuthenticationFailedError.new(output)
+      raise AuthenticationFailedError, output
     when "404"
       raise HTTPNotFoundError, output
     else
-      error = Utils::JSON.load(output)["message"] rescue nil
-      error ||= "curl failed! #{errors}"
-      raise Error, error
+      begin
+        raise APIError, Utils::JSON.load(output)["message"]
+      rescue
+        # No valid JSON in output, thus a more fundamental non-API error.
+        raise CurlError.new(url, errors)
+      end
     end
   end
 
