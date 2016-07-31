@@ -476,7 +476,7 @@ _brew_style ()
     local cur="${COMP_WORDS[COMP_CWORD]}"
     case "$cur" in
     --*)
-        __brewcomp "--fix"
+        __brewcomp "--display-cop-names --fix"
         return
         ;;
     esac
