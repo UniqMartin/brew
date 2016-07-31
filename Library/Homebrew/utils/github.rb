@@ -249,7 +249,10 @@ module GitHub
 
   def issues_for_formula(name, options = {})
     tap = options[:tap] || CoreTap.instance
-    issues_matching(name, :state => "open", :repo => "#{tap.user}/homebrew-#{tap.repo}")
+    return [] if tap.custom_remote? || tap.private?
+
+    github_repository = "#{tap.user}/homebrew-#{tap.repo}"
+    issues_matching(name, :state => "open", :repo => github_repository)
   end
 
   def print_pull_requests_matching(query)
