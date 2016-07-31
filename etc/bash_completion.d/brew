@@ -153,9 +153,24 @@ _brew_cleanup ()
 _brew_create ()
 {
     local cur="${COMP_WORDS[COMP_CWORD]}"
+    local idx="$((COMP_CWORD - 1))"
+    local prv="${COMP_WORDS[idx]}"
+
+    if [[ "${prv}" = --tap ]] ; then
+        __brew_complete_tapped
+        return
+    fi
+
     case "$cur" in
     --*)
-        __brewcomp "--autotools --cmake --no-fetch --set-name --set-version"
+        __brewcomp "
+            --autotools
+            --cmake
+            --no-fetch
+            --set-name
+            --set-version
+            --tap
+            "
         return
         ;;
     esac
