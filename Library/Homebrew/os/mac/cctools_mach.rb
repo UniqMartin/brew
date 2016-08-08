@@ -30,19 +30,19 @@ module CctoolsMachO
 
       offsets.each do |offset|
         arch = case read(8, offset).unpack("N2")
-          when [0xcefaedfe, 0x07000000] then :i386
-          when [0xcffaedfe, 0x07000001] then :x86_64
-          when [0xfeedface, 0x00000012] then :ppc7400
-          when [0xfeedfacf, 0x01000012] then :ppc64
-          else :dunno
-          end
+        when [0xcefaedfe, 0x07000000] then :i386
+        when [0xcffaedfe, 0x07000001] then :x86_64
+        when [0xfeedface, 0x00000012] then :ppc7400
+        when [0xfeedfacf, 0x01000012] then :ppc64
+        else :dunno
+        end
 
         type = case read(4, offset + 12).unpack("N")[0]
-          when 0x00000002, 0x02000000 then :executable
-          when 0x00000006, 0x06000000 then :dylib
-          when 0x00000008, 0x08000000 then :bundle
-          else :dunno
-          end
+        when 0x00000002, 0x02000000 then :executable
+        when 0x00000006, 0x06000000 then :dylib
+        when 0x00000008, 0x08000000 then :bundle
+        else :dunno
+        end
 
         mach_data << { :arch => arch, :type => type }
       end
