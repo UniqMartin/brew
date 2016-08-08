@@ -29,15 +29,25 @@ module CctoolsMachO
       end
 
       offsets.each do |offset|
-        arch = case read(8, offset).unpack("N2")
+        mach_header = read(16, offset).unpack("N4")
+
+        arch = case mach_header[0..1]
         when [0xcefaedfe, 0x07000000] then :i386
         when [0xcffaedfe, 0x07000001] then :x86_64
         when [0xfeedface, 0x00000012] then :ppc7400
         when [0xfeedfacf, 0x01000012] then :ppc64
-        else :dunno
+        else
+          case mach_header[0]
+          when 0xcefaedfe, 0xcffaedfe, 0xfeedface, 0xfeedfacf
+            # Mach-O magic, but unrecognized architecture (e.g. ARM/ARM64).
+            :dunno
+          else
+            # Multi-architecture static archive (fat header, but not Mach-O).
+            raise "Not a Mach-O binary."
+          end
         end
 
-        type = case read(4, offset + 12).unpack("N")[0]
+        type = case mach_header[3]
         when 0x00000002, 0x02000000 then :executable
         when 0x00000006, 0x06000000 then :dylib
         when 0x00000008, 0x08000000 then :bundle
